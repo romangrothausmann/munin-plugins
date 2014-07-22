@@ -86,6 +86,8 @@ if [ "$1" = "suggest" ]; then
 	echo "temp"
 	echo "mem"
 	echo "fan"
+	echo "usgG"
+	echo "usgM"
 	exit 0
 fi
 
@@ -119,7 +121,7 @@ if [ "$1" = "config" ]; then
 			while [ $nGpusCounter -lt $nGpus ]
 			do
 				gpuName=`echo "$nGpusOutput" | sed -n $(( $nGpusCounter + 1 ))p | cut -d \( -f 1`
-				echo "temp${nGpusCounter}.warning ${warning:-75}"
+				echo "temp${nGpusCounter}.warning ${warning:-85}"
 				echo "temp${nGpusCounter}.critical ${critical:-95}"
 				echo "temp${nGpusCounter}.info Temperature information for $gpuName"
 				: $(( nGpusCounter = $nGpusCounter + 1 ))
@@ -133,6 +135,8 @@ if [ "$1" = "config" ]; then
 			while [ $nGpusCounter -lt $nGpus ]
 			do
 				gpuName=`echo "$nGpusOutput" | sed -n $(( $nGpusCounter + 1 ))p | cut -d \( -f 1`
+				echo "mem${nGpusCounter}.warning ${warning:-70}"
+				echo "mem${nGpusCounter}.critical ${critical:-90}"
 				echo "mem${nGpusCounter}.info Memory information for $gpuName"
 				gpuMem=`echo "$gpusTotalMemOutput"| sed -n $(( $nGpusCounter + 1 ))p`
 				gpusTotalMem="${gpusTotalMem}${gpuMem} for GPU ${nGpusCounter}"
@@ -159,6 +163,34 @@ if [ "$1" = "config" ]; then
 			do
 				gpuName=`echo "$nGpusOutput" | sed -n $(( $nGpusCounter + 1 ))p | cut -d \( -f 1`
 				echo "fan${nGpusCounter}.info Fan information for $gpuName"
+				: $(( nGpusCounter = $nGpusCounter + 1 ))
+				done 
+			;;
+		usgG)
+			echo 'graph_title GPU utilization'
+			echo 'graph_args -l 0 -u 100'
+			echo 'graph_vlabel Percentage'
+			echo 'graph_category gpu'
+			echo "graph_info GPU utilization of NVIDIA GPUs using driver version $driverVersion"
+			nGpusCounter=0
+			while [ $nGpusCounter -lt $nGpus ]
+			do
+				gpuName=`echo "$nGpusOutput" | sed -n $(( $nGpusCounter + 1 ))p | cut -d \( -f 1`
+				echo "usgG${nGpusCounter}.info GPU utilization for $gpuName"
+				: $(( nGpusCounter = $nGpusCounter + 1 ))
+				done 
+			;;
+		usgM)
+			echo 'graph_title memory utilization'
+			echo 'graph_args -l 0 -u 100'
+			echo 'graph_vlabel Percentage'
+			echo 'graph_category gpu'
+			echo "graph_info memory utilization of NVIDIA GPUs using driver version $driverVersion"
+			nGpusCounter=0
+			while [ $nGpusCounter -lt $nGpus ]
+			do
+				gpuName=`echo "$nGpusOutput" | sed -n $(( $nGpusCounter + 1 ))p | cut -d \( -f 1`
+				echo "usgM${nGpusCounter}.info memory utilization for $gpuName"
 				: $(( nGpusCounter = $nGpusCounter + 1 ))
 				done 
 			;;
@@ -198,12 +230,18 @@ case $name in
 			totalMemGpu=`echo "$totalMemGpus" | sed -n $(( $nGpusCounter + 1 ))p`
 			usedMemGpu=`echo "$usedMemGpus" | sed -n $(( $nGpusCounter + 1 ))p`
 			percentMemUsed=$(( $usedMemGpu * 100 / $totalMemGpu ))
-			valueGpus="${valueGpus}${percentMemUsed}"$'\n'
+			valueGpus="${valueGpus}${percentMemUsed}"'\n'
 			: $(( nGpusCounter = $nGpusCounter + 1 ))
 		done
 		;;
 	fan)
 		valueGpus=`echo "$smiOutput" | grep "Fan Speed" | cut -d ':' -f 2 | cut -d ' ' -f 2`
+		;;
+	usgG)
+		valueGpus=`echo "$smiOutput" | grep -A 1 "Utilization" | grep "Gpu" | cut -d : -f 2 | cut -d ' ' -f 2`
+		;;
+	usgM)
+		valueGpus=`echo "$smiOutput" | grep -A 2 "Utilization" | grep "Memory" | cut -d : -f 2 | cut -d ' ' -f 2`
 		;;
 	*)
 		echo "Can't run without a proper symlink. Exiting."
