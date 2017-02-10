@@ -137,8 +137,8 @@ if [ "$1" = "config" ]; then
 			while [ $nGpusCounter -lt $nGpus ]
 			do
 				gpuName=`echo "$nGpusOutput" | sed -n $(( $nGpusCounter + 1 ))p | cut -d \( -f 1`
-				echo "mem${nGpusCounter}.warning ${warning:-70}"
-				echo "mem${nGpusCounter}.critical ${critical:-90}"
+				# echo "mem${nGpusCounter}.warning ${warning:-70}"
+				# echo "mem${nGpusCounter}.critical ${critical:-90}"
 				echo "mem${nGpusCounter}.info Memory information for $gpuName"
 				gpuMem=`echo "$gpusTotalMemOutput"| sed -n $(( $nGpusCounter + 1 ))p`
 				gpusTotalMem="${gpusTotalMem}${gpuMem} for GPU ${nGpusCounter}"
